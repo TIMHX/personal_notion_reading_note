@@ -33,24 +33,24 @@ def main():
 
     # Load config.yaml
     try:
-        with open("config.yaml", "r") as f:
+        with open("config.yaml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         subject_id = config.get("subject_id")
         assignment_id = config.get("assignments_id")
         reading_template_id = config.get("reading_template_id")
 
         prompts_config = config.get("prompts", [])
-        default_prompt_content = next(
-            (
-                p["content"]
-                for p in prompts_config
-                if p["name"] == "default_reading_prompt"
-            ),
+        active_prompt_name = config.get("active_prompt", "default_reading_prompt")
+
+        selected_prompt_content = next(
+            (p["content"] for p in prompts_config if p["name"] == active_prompt_name),
             None,
         )
 
-        if not default_prompt_content:
-            logger.error("Default reading prompt not found in config.yaml.")
+        if not selected_prompt_content:
+            logger.error(
+                f"Active prompt '{active_prompt_name}' not found in config.yaml."
+            )
             return
 
     except FileNotFoundError:
@@ -63,7 +63,7 @@ def main():
         return
 
     gemini_processor = GeminiProcessor(
-        gemini_api_key, default_prompt_content, log_level_str=log_level_str
+        gemini_api_key, selected_prompt_content, log_level_str=log_level_str
     )
 
     notion_client = NotionClient(

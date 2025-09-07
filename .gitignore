@@ -208,3 +208,7 @@ __marimo__/
 
 # readings
 readings/
+
+# Allow readings/AI_ch1-1.pdf but ignore all other files in readings/
+readings/*
+!readings/AI_ch1-1.pdf

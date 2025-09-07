@@ -84,19 +84,7 @@ class NotionClient:
                     },
                 }
             )
-            for paragraph in summary.split("\n"):
-                if paragraph.strip():
-                    column_2_blocks.append(
-                        {
-                            "object": "block",
-                            "type": "paragraph",
-                            "paragraph": {
-                                "rich_text": [
-                                    {"type": "text", "text": {"content": paragraph}}
-                                ]
-                            },
-                        }
-                    )
+            column_2_blocks.extend(self._split_text_into_blocks(summary, "paragraph"))
         if notes:
             column_2_blocks.append(
                 {
@@ -107,19 +95,7 @@ class NotionClient:
                     },
                 }
             )
-            for paragraph in notes.split("\n"):
-                if paragraph.strip():
-                    column_2_blocks.append(
-                        {
-                            "object": "block",
-                            "type": "paragraph",
-                            "paragraph": {
-                                "rich_text": [
-                                    {"type": "text", "text": {"content": paragraph}}
-                                ]
-                            },
-                        }
-                    )
+            column_2_blocks.extend(self._split_text_into_blocks(notes, "paragraph"))
         column_list_children.append(
             {
                 "object": "block",
@@ -217,6 +193,63 @@ class NotionClient:
             heading_type: {
                 "rich_text": [{"type": "text", "text": {"content": content}}]
             },
+        }
+
+    def _split_text_into_blocks(
+        self, text: str, block_type: str = "paragraph", max_block_length: int = 2000
+    ) -> list:
+        blocks = []
+        current_block_content = []
+
+        # Split text by newlines to respect original paragraph breaks
+        paragraphs = text.split("\\n")
+
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                continue
+
+            # If adding this paragraph exceeds max_block_length, create a new block
+            if (
+                sum(len(c) for c in current_block_content) + len(paragraph)
+                > max_block_length
+                and current_block_content
+            ):
+                blocks.append(
+                    self._create_block_with_rich_text(
+                        block_type, "\\n".join(current_block_content)
+                    )
+                )
+                current_block_content = []
+
+            current_block_content.append(paragraph)
+
+            # If current_block_content is long enough, or it's the last paragraph, create a block
+            if (
+                sum(len(c) for c in current_block_content) >= max_block_length
+                or paragraph == paragraphs[-1]
+            ):
+                blocks.append(
+                    self._create_block_with_rich_text(
+                        block_type, "\\n".join(current_block_content)
+                    )
+                )
+                current_block_content = []
+
+        # Add any remaining content
+        if current_block_content:
+            blocks.append(
+                self._create_block_with_rich_text(
+                    block_type, "\\n".join(current_block_content)
+                )
+            )
+
+        return blocks
+
+    def _create_block_with_rich_text(self, block_type: str, content: str) -> dict:
+        return {
+            "object": "block",
+            "type": block_type,
+            block_type: {"rich_text": [{"type": "text", "text": {"content": content}}]},
         }
 
 

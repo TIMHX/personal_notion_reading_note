@@ -57,7 +57,7 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 
 ## Usage
 
-1.  Place your PDF documents in the directory specified by `reading_folder` in `config.yaml` (e.g., `./readings/`).
+1.  Place your PDF documents in the directory specified by `reading_folder` in `config.yaml` (e.g., `./readings/`). For demonstration purposes, `readings/AI_ch1-1.pdf` will be used as an example.
 2.  Run the main script:
     ```bash
     uv run src/main.py
@@ -66,6 +66,8 @@ A Python tool designed to automate the process of summarizing PDF documents usin
     *   Read all PDF files from the `reading_folder`.
     *   Process each PDF using the Gemini AI to extract key points, notes, and a summary.
     *   Create a new page in your specified Notion database for each PDF, populating it with the extracted information and the original content.
+
+## Output example (Notion)
 
 ## Project Structure
 
