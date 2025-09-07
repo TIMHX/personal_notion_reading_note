@@ -72,29 +72,19 @@ def main():
             for page in reader.pages:
                 pdf_content += page.extract_text()
 
-            summary = gemini_processor.summarize_text(pdf_content)
+            processed_content = gemini_processor.process_document(pdf_content)
 
             file_name = Path(pdf_file).stem
             title = f"Reading Summary: {file_name}"
-            content_blocks = [
-                {
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [
-                            {
-                                "type": "text",
-                                "text": {
-                                    "content": summary,
-                                },
-                            }
-                        ]
-                    },
-                }
-            ]
 
             notion_client.create_reading_page(
-                title, content_blocks, subject_id, assignment_id
+                title=title,
+                content_to_process=pdf_content,  # Pass original content for header processing
+                subject_id=subject_id,
+                assignment_id=assignment_id,
+                key_points=processed_content.get("key_points"),
+                notes=processed_content.get("notes"),
+                summary=processed_content.get("summary"),
             )
             logger.info(f"Created Notion page for {file_name}")
 

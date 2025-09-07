@@ -28,27 +28,118 @@ class NotionClient:
     def create_reading_page(
         self,
         title: str,
-        content_blocks: list,
+        content_to_process: str,  # Changed from content_blocks to raw text
         subject_id: str,
         assignment_id: str,
+        key_points: list = None,
+        notes: str = None,
+        summary: str = None,
     ) -> dict:
         create_page_url = "https://api.notion.com/v1/pages"
         current_date = datetime.now().isoformat()
 
-        # Truncate content blocks to fit Notion's 2000 character limit for rich_text content
-        processed_content_blocks = []
-        for block in content_blocks:
-            if "paragraph" in block and "rich_text" in block["paragraph"]:
-                for text_obj in block["paragraph"]["rich_text"]:
-                    if "text" in text_obj and "content" in text_obj["text"]:
-                        original_content = text_obj["text"]["content"]
-                        # Split content into chunks of 2000 characters
-                        chunks = [
-                            original_content[i : i + 2000]
-                            for i in range(0, len(original_content), 2000)
+        children_blocks = []
+
+        # Add Key Points as bulleted list
+        if key_points:
+            children_blocks.append(
+                {
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [
+                            {"type": "text", "text": {"content": "Key Points"}}
                         ]
+                    },
+                }
+            )
+            for point in key_points:
+                children_blocks.append(
+                    {
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        },
+                    }
+                )
+
+        # Add Notes as paragraph
+        if notes:
+            children_blocks.append(
+                {
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Notes"}}]
+                    },
+                }
+            )
+            for paragraph in notes.split("\n"):
+                if paragraph.strip():
+                    children_blocks.append(
+                        {
+                            "object": "block",
+                            "type": "paragraph",
+                            "paragraph": {
+                                "rich_text": [
+                                    {"type": "text", "text": {"content": paragraph}}
+                                ]
+                            },
+                        }
+                    )
+
+        # Add Summary as paragraph
+        if summary:
+            children_blocks.append(
+                {
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Summary"}}]
+                    },
+                }
+            )
+            for paragraph in summary.split("\n"):
+                if paragraph.strip():
+                    children_blocks.append(
+                        {
+                            "object": "block",
+                            "type": "paragraph",
+                            "paragraph": {
+                                "rich_text": [
+                                    {"type": "text", "text": {"content": paragraph}}
+                                ]
+                            },
+                        }
+                    )
+
+        # Process original content_to_process for paragraphs and headers
+        if content_to_process:
+            children_blocks.append(
+                {
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [
+                            {"type": "text", "text": {"content": "Original Content"}}
+                        ]
+                    },
+                }
+            )
+            for line in content_to_process.split("\n"):
+                if line.strip():
+                    if line.startswith("### "):
+                        children_blocks.append(self._create_heading_block(line[4:], 3))
+                    elif line.startswith("## "):
+                        children_blocks.append(self._create_heading_block(line[3:], 2))
+                    elif line.startswith("# "):
+                        children_blocks.append(self._create_heading_block(line[2:], 1))
+                    else:
+                        # Split paragraph content into chunks of 2000 characters
+                        chunks = [line[i : i + 2000] for i in range(0, len(line), 2000)]
                         for chunk in chunks:
-                            processed_content_blocks.append(
+                            children_blocks.append(
                                 {
                                     "object": "block",
                                     "type": "paragraph",
@@ -59,8 +150,6 @@ class NotionClient:
                                     },
                                 }
                             )
-            else:
-                processed_content_blocks.append(block)
 
         properties = {
             "notes": {"title": [{"text": {"content": title}}]},
@@ -74,67 +163,34 @@ class NotionClient:
         if assignment_id:
             properties["assignments"] = {"relation": [{"id": assignment_id}]}
 
-        if self.reading_template_id:
-            # First, create the page without children, applying the template
-            create_page_data = {
-                "parent": {
-                    "type": "database_id",
-                    "database_id": self.database_id,
-                    "template_id": self.reading_template_id,
-                },
-                "properties": {
-                    "title": [{"text": {"content": title}}],
-                },
-            }
-            try:
-                response = requests.post(
-                    create_page_url, headers=self.headers, json=create_page_data
-                )
-                response.raise_for_status()
-                page_id = response.json().get("id")
-                self.logger.info(
-                    f"Successfully created Notion page from template: {title} with ID: {page_id}"
-                )
+        data = {
+            "parent": {"database_id": self.database_id},
+            "properties": properties,
+            "children": children_blocks,
+        }
+        try:
+            response = requests.post(create_page_url, headers=self.headers, json=data)
+            response.raise_for_status()
+            page_id = response.json().get("id")
+            self.logger.info(
+                f"Successfully created Notion page: {title} with ID: {page_id}"
+            )
+            return {"page_id": page_id}
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Error creating Notion page: {e}")
+            if response is not None:
+                self.logger.error(f"Notion API response: {response.text}")
+            return {"error": str(e)}
 
-                # Then, append the content blocks to the newly created page
-                if processed_content_blocks:
-                    append_result = self._append_block_children(
-                        page_id, processed_content_blocks
-                    )
-                    if "error" in append_result:
-                        self.logger.error(
-                            f"Error appending content to page {page_id}: {append_result['error']}"
-                        )
-                        return {"error": append_result["error"]}
-
-                return {"page_id": page_id}
-            except requests.exceptions.RequestException as e:
-                self.logger.error(f"Error creating Notion page from template: {e}")
-                if response is not None:
-                    self.logger.error(f"Notion API response: {response.text}")
-                return {"error": str(e)}
-        else:
-            # Existing logic for creating a page without a template
-            data = {
-                "parent": {"database_id": self.database_id},
-                "properties": properties,
-                "children": processed_content_blocks,
-            }
-            try:
-                response = requests.post(
-                    create_page_url, headers=self.headers, json=data
-                )
-                response.raise_for_status()
-                page_id = response.json().get("id")
-                self.logger.info(
-                    f"Successfully created Notion page: {title} with ID: {page_id}"
-                )
-                return {"page_id": page_id}
-            except requests.exceptions.RequestException as e:
-                self.logger.error(f"Error creating Notion page: {e}")
-                if response is not None:
-                    self.logger.error(f"Notion API response: {response.text}")
-                return {"error": str(e)}
+    def _create_heading_block(self, content: str, level: int) -> dict:
+        heading_type = f"heading_{level}"
+        return {
+            "object": "block",
+            "type": heading_type,
+            heading_type: {
+                "rich_text": [{"type": "text", "text": {"content": content}}]
+            },
+        }
 
     def _append_block_children(self, block_id: str, children: list) -> dict:
         append_block_children_url = (

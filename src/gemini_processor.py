@@ -12,22 +12,65 @@ class GeminiProcessor:
 
         self.logger = setup_logger(__name__, log_level_str)
 
-    def summarize_text(self, text: str) -> str:
+    def process_document(self, text: str) -> dict:
         prompt = f"""
-        Please provide a detailed summary of the following document.
-        Document:
+        请对以下文档进行处理，并提供以下内容：
+        1. **要点 (Key Points)**：文档的主要观点或重要信息，以项目符号列表形式呈现。
+        2. **笔记 (Notes)**：对文档内容的个人理解、思考或补充说明，以段落形式呈现。
+        3. **摘要 (Summary)**：文档的详细总结，以段落形式呈现。
+
+        请确保输出格式如下，并使用明确的标题分隔每个部分：
+
+        **要点**
+        *   [要点 1]
+        *   [要点 2]
+        *   [要点 3]
+
+        **笔记**
+        [您的笔记内容]
+
+        **摘要**
+        [您的摘要内容]
+
+        文档:
         ---
         {text}
         ---
-        Detailed Summary:
         """
         try:
-            self.logger.debug(f"Sending summarization prompt to Gemini:\n{prompt}")
+            self.logger.debug(
+                f"Sending document processing prompt to Gemini:\n{prompt}"
+            )
             response = self.model.generate_content(prompt)
-            return response.text.strip()
+            response_text = response.text.strip()
+
+            key_points = []
+            notes = ""
+            summary = ""
+
+            # 解析响应
+            parts = response_text.split("**")
+            for i, part in enumerate(parts):
+                if "要点" in part:
+                    kp_content = parts[i + 1].strip()
+                    key_points = [
+                        item.strip().replace("* ", "")
+                        for item in kp_content.split("\n")
+                        if item.strip().startswith("*")
+                    ]
+                elif "笔记" in part:
+                    notes = parts[i + 1].strip()
+                elif "摘要" in part:
+                    summary = parts[i + 1].strip()
+
+            return {"key_points": key_points, "notes": notes, "summary": summary}
         except Exception as e:
-            self.logger.error(f"Error summarizing text with Gemini: {e}")
-            return "Error generating summary."
+            self.logger.error(f"Error processing document with Gemini: {e}")
+            return {
+                "key_points": [],
+                "notes": "Error generating notes.",
+                "summary": "Error generating summary.",
+            }
 
 
 if __name__ == "__main__":
