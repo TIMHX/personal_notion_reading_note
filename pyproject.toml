@@ -1,0 +1,15 @@
+[project]
+name = "notion-bills-tracker"
+version = "0.1.0"
+description = "A tool to track personal bills and push to notion."
+dependencies = [
+    "google-generativeai",
+    "requests",
+    "python-dotenv",
+    "PyYAML",
+    "pypdf",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
