@@ -20,24 +20,29 @@ class GeminiProcessor:
             )
             response = self.model.generate_content(prompt)
             response_text = response.text.strip()
+            self.logger.info(f"Received response from Gemini: {response_text}")
 
             key_points = []
             notes = ""
             summary = ""
 
-            parts = response_text.split("**")
+            parts = response_text.split("###")
             for i, part in enumerate(parts):
                 if "Key Points" in part:
-                    kp_content = parts[i + 1].strip()
-                    key_points = [
-                        item.strip().replace("* ", "")
-                        for item in kp_content.split("\n")
-                        if item.strip().startswith("*")
-                    ]
+                    # Ensure there is a next part before accessing parts[i + 1]
+                    if i + 1 < len(parts):
+                        kp_content = parts[i + 1].strip()
+                        key_points = [
+                            item.strip().replace("- ", "")
+                            for item in kp_content.split("\n")
+                            if item.strip().startswith("-")
+                        ]
                 elif "Notes" in part:
-                    notes = parts[i + 1].strip()
+                    if i + 1 < len(parts):
+                        notes = parts[i + 1].strip()
                 elif "Summary" in part:
-                    summary = parts[i + 1].strip()
+                    if i + 1 < len(parts):
+                        summary = parts[i + 1].strip()
 
             return {"key_points": key_points, "notes": notes, "summary": summary}
         except Exception as e:

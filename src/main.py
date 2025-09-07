@@ -96,7 +96,6 @@ def main():
 
             notion_client.create_reading_page(
                 title=title,
-                content_to_process=pdf_content,  # Pass original content for header processing
                 subject_id=subject_id,
                 assignment_id=assignment_id,
                 key_points=processed_content.get("key_points"),

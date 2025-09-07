@@ -28,7 +28,6 @@ class NotionClient:
     def create_reading_page(
         self,
         title: str,
-        content_to_process: str,  # Changed from content_blocks to raw text
         subject_id: str,
         assignment_id: str,
         key_points: list = None,

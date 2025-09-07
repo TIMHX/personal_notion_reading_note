@@ -1,9 +1,10 @@
 import logging
+import os
 
 
 def setup_logger(name: str, log_level_str: str = "WARNING") -> logging.Logger:
     """
-    Sets up a logger with a configurable log level.
+    Sets up a logger with a configurable log level and file output.
 
     Args:
         name: The name of the logger (usually __name__).
@@ -25,18 +26,31 @@ def setup_logger(name: str, log_level_str: str = "WARNING") -> logging.Logger:
     logger = logging.getLogger(name)
     if not logger.handlers:
         logger.setLevel(log_level)
-        handler = logging.StreamHandler()
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        # File handler
+        log_dir = "logging"
+        os.makedirs(log_dir, exist_ok=True)
+        file_handler = logging.FileHandler(os.path.join(log_dir, "app.log"))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
     else:
         # If handlers already exist, ensure the level is set correctly
         logger.setLevel(log_level)
-        # Optionally, update formatter if needed, but usually not necessary if it's a shared handler
         for handler in logger.handlers:
-            handler.setFormatter(formatter)  # Re-apply formatter in case it was changed
+            # Re-apply formatter in case it was changed or for new handlers
+            handler.setFormatter(
+                logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
+            )
 
     return logger
 
