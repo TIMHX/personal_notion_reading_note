@@ -6,37 +6,14 @@ from logger_utils import setup_logger
 
 
 class GeminiProcessor:
-    def __init__(self, api_key, log_level_str: str = "WARNING"):
+    def __init__(self, api_key, prompt_content: str, log_level_str: str = "WARNING"):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel("gemini-2.5-pro")
-
+        self.prompt_content = prompt_content
         self.logger = setup_logger(__name__, log_level_str)
 
     def process_document(self, text: str) -> dict:
-        prompt = f"""
-        请对以下文档进行处理，并提供以下内容：
-        1. **要点 (Key Points)**：文档的主要观点或重要信息，以项目符号列表形式呈现。
-        2. **笔记 (Notes)**：对文档内容的个人理解、思考或补充说明，以段落形式呈现。
-        3. **摘要 (Summary)**：文档的详细总结，以段落形式呈现。
-
-        请确保输出格式如下，并使用明确的标题分隔每个部分：
-
-        **要点**
-        *   [要点 1]
-        *   [要点 2]
-        *   [要点 3]
-
-        **笔记**
-        [您的笔记内容]
-
-        **摘要**
-        [您的摘要内容]
-
-        文档:
-        ---
-        {text}
-        ---
-        """
+        prompt = f"{self.prompt_content}\n\n文档:\n---\n{text}\n---"
         try:
             self.logger.debug(
                 f"Sending document processing prompt to Gemini:\n{prompt}"
@@ -48,7 +25,6 @@ class GeminiProcessor:
             notes = ""
             summary = ""
 
-            # 解析响应
             parts = response_text.split("**")
             for i, part in enumerate(parts):
                 if "要点" in part:
@@ -84,5 +60,31 @@ if __name__ == "__main__":
     gemini_processor = GeminiProcessor(gemini_api_key, log_level_str=log_level_str)
 
     sample_text_to_summarize = "This is a sample document about artificial intelligence. It discusses the history, key concepts, and future of AI."
-    summary = gemini_processor.summarize_text(sample_text_to_summarize)
-    gemini_processor.logger.info(f"Summary of sample text: {summary}")
+
+    # For testing purposes, we need a dummy prompt content
+    dummy_prompt_content = """
+    请对以下文档进行处理，并提供以下内容：
+    1. **要点 (Key Points)**：文档的主要观点或重要信息，以项目符号列表形式呈现。
+    2. **笔记 (Notes)**：对文档内容的个人理解、思考或补充说明，以段落形式呈现。
+    3. **摘要 (Summary)**：文档的详细总结，以段落形式呈现。
+
+    请确保输出格式如下，并使用明确的标题分隔每个部分：
+
+    **要点**
+    *   [要点 1]
+    *   [要点 2]
+    *   [要点 3]
+
+    **笔记**
+    [您的笔记内容]
+
+    **摘要**
+    [您的摘要内容]
+    """
+    gemini_processor = GeminiProcessor(
+        gemini_api_key, dummy_prompt_content, log_level_str=log_level_str
+    )
+    processed_content = gemini_processor.process_document(sample_text_to_summarize)
+    gemini_processor.logger.info(
+        f"Processed content of sample text: {processed_content}"
+    )

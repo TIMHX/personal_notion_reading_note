@@ -31,8 +31,6 @@ def main():
         )
         return
 
-    gemini_processor = GeminiProcessor(gemini_api_key, log_level_str=log_level_str)
-
     # Load config.yaml
     try:
         with open("config.yaml", "r") as f:
@@ -40,6 +38,21 @@ def main():
         subject_id = config.get("subject_id")
         assignment_id = config.get("assignments_id")
         reading_template_id = config.get("reading_template_id")
+
+        prompts_config = config.get("prompts", [])
+        default_prompt_content = next(
+            (
+                p["content"]
+                for p in prompts_config
+                if p["name"] == "default_reading_prompt"
+            ),
+            None,
+        )
+
+        if not default_prompt_content:
+            logger.error("Default reading prompt not found in config.yaml.")
+            return
+
     except FileNotFoundError:
         logger.error(
             "config.yaml not found. Please create it with subject_id and assignments_id."
@@ -48,6 +61,10 @@ def main():
     except yaml.YAMLError as e:
         logger.error(f"Error reading config.yaml: {e}")
         return
+
+    gemini_processor = GeminiProcessor(
+        gemini_api_key, default_prompt_content, log_level_str=log_level_str
+    )
 
     notion_client = NotionClient(
         notion_api_key,
