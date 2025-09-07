@@ -38,15 +38,16 @@ class NotionClient:
         create_page_url = "https://api.notion.com/v1/pages"
         current_date = datetime.now().isoformat()
 
-        children_blocks = []
+        column_list_children = []
 
-        # Add Key Points as bulleted list
+        # Column 1: Key Points
+        column_1_blocks = []
         if key_points:
-            children_blocks.append(
+            column_1_blocks.append(
                 {
                     "object": "block",
-                    "type": "heading_2",
-                    "heading_2": {
+                    "type": "heading_3",
+                    "heading_3": {
                         "rich_text": [
                             {"type": "text", "text": {"content": "Key Points"}}
                         ]
@@ -54,7 +55,7 @@ class NotionClient:
                 }
             )
             for point in key_points:
-                children_blocks.append(
+                column_1_blocks.append(
                     {
                         "object": "block",
                         "type": "bulleted_list_item",
@@ -63,46 +64,29 @@ class NotionClient:
                         },
                     }
                 )
+        column_list_children.append(
+            {
+                "object": "block",
+                "type": "column",
+                "column": {"children": column_1_blocks},
+            }
+        )
 
-        # Add Notes as paragraph
-        if notes:
-            children_blocks.append(
-                {
-                    "object": "block",
-                    "type": "heading_2",
-                    "heading_2": {
-                        "rich_text": [{"type": "text", "text": {"content": "Notes"}}]
-                    },
-                }
-            )
-            for paragraph in notes.split("\n"):
-                if paragraph.strip():
-                    children_blocks.append(
-                        {
-                            "object": "block",
-                            "type": "paragraph",
-                            "paragraph": {
-                                "rich_text": [
-                                    {"type": "text", "text": {"content": paragraph}}
-                                ]
-                            },
-                        }
-                    )
-
-        # Add Summary as paragraph
+        # Column 2: Summary and Notes
+        column_2_blocks = []
         if summary:
-            children_blocks.append(
+            column_2_blocks.append(
                 {
                     "object": "block",
-                    "type": "heading_2",
-                    "heading_2": {
+                    "type": "heading_3",
+                    "heading_3": {
                         "rich_text": [{"type": "text", "text": {"content": "Summary"}}]
                     },
                 }
             )
             for paragraph in summary.split("\n"):
                 if paragraph.strip():
-                    children_blocks.append(
+                    column_2_blocks.append(
                         {
                             "object": "block",
                             "type": "paragraph",
@@ -113,6 +97,45 @@ class NotionClient:
                             },
                         }
                     )
+        if notes:
+            column_2_blocks.append(
+                {
+                    "object": "block",
+                    "type": "heading_3",
+                    "heading_3": {
+                        "rich_text": [{"type": "text", "text": {"content": "Notes"}}]
+                    },
+                }
+            )
+            for paragraph in notes.split("\n"):
+                if paragraph.strip():
+                    column_2_blocks.append(
+                        {
+                            "object": "block",
+                            "type": "paragraph",
+                            "paragraph": {
+                                "rich_text": [
+                                    {"type": "text", "text": {"content": paragraph}}
+                                ]
+                            },
+                        }
+                    )
+        column_list_children.append(
+            {
+                "object": "block",
+                "type": "column",
+                "column": {"children": column_2_blocks},
+            }
+        )
+
+        # Main children blocks for the page
+        children_blocks = [
+            {
+                "object": "block",
+                "type": "column_list",
+                "column_list": {"children": column_list_children},
+            }
+        ]
 
         # Process original content_to_process for paragraphs and headers
         if content_to_process:
@@ -165,6 +188,10 @@ class NotionClient:
 
         data = {
             "parent": {"database_id": self.database_id},
+            "icon": {
+                "type": "external",
+                "external": {"url": "https://www.notion.so/icons/book_open_brown.svg"},
+            },  # Set the page icon to an external SVG
             "properties": properties,
             "children": children_blocks,
         }
@@ -191,24 +218,6 @@ class NotionClient:
                 "rich_text": [{"type": "text", "text": {"content": content}}]
             },
         }
-
-    def _append_block_children(self, block_id: str, children: list) -> dict:
-        append_block_children_url = (
-            f"https://api.notion.com/v1/blocks/{block_id}/children"
-        )
-        data = {"children": children}
-        try:
-            response = requests.patch(
-                append_block_children_url, headers=self.headers, json=data
-            )
-            response.raise_for_status()
-            self.logger.info(f"Successfully appended blocks to {block_id}")
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"Error appending blocks to {block_id}: {e}")
-            if response is not None:
-                self.logger.error(f"Notion API response: {response.text}")
-            return {"error": str(e)}
 
 
 if __name__ == "__main__":
