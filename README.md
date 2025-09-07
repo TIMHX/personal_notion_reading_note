@@ -1,4 +1,4 @@
-# Notion Personal Reading Note Tracker
+# Notion Personal Reading Notes Tracker
 
 A Python tool designed to automate the process of summarizing PDF documents using the Gemini AI model and pushing the processed content, including key points, notes, summary, and the original content, to Notion. This helps in organizing and tracking personal reading notes efficiently.
 
