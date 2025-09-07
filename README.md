@@ -8,7 +8,7 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 *   **AI-Powered Summarization**: Utilizes the Gemini AI model to generate key points, detailed notes, and a comprehensive summary of the extracted text.
 *   **Notion Integration**: Creates new pages in a specified Notion database with the processed reading notes, including structured content (key points as bulleted lists, summary and notes as paragraphs, and original content with proper headings).
 *   **Configurable**: Allows configuration of Notion database IDs and reading folder via a `config.yaml` file.
-*   **Logging**: Provides detailed logging for tracking the process and troubleshooting.
+*   **Logging**: Provides detailed logging for tracking the process and troubleshooting. Log files are generated in the `logging/app.log` file.
 
 ## Installation
 
@@ -54,6 +54,8 @@ A Python tool designed to automate the process of summarizing PDF documents usin
     *   `subject_id`: The Notion relation ID for the 'subject' property in your database.
     *   `assignments_id`: The Notion relation ID for the 'assignments' property in your database.
     *   `reading_template_id`: (Optional) The ID of a Notion template to use when creating new reading pages.
+    *   `prompts`: A list of prompt configurations for the Gemini AI. Each prompt has a `name` and `content`.
+    *   `active_prompt`: The name of the prompt to be used for processing documents. This should match one of the `name` values in the `prompts` list.
 
 ## Usage
 
@@ -68,6 +70,8 @@ A Python tool designed to automate the process of summarizing PDF documents usin
     *   Create a new page in your specified Notion database for each PDF, populating it with the extracted information and the original content.
 
 ## Output example (Notion)
+![alt text](image.png)
+
 
 ## Project Structure
 
