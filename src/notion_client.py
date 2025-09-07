@@ -113,43 +113,6 @@ class NotionClient:
             }
         ]
 
-        # Process original content_to_process for paragraphs and headers
-        if content_to_process:
-            children_blocks.append(
-                {
-                    "object": "block",
-                    "type": "heading_2",
-                    "heading_2": {
-                        "rich_text": [
-                            {"type": "text", "text": {"content": "Original Content"}}
-                        ]
-                    },
-                }
-            )
-            for line in content_to_process.split("\n"):
-                if line.strip():
-                    if line.startswith("### "):
-                        children_blocks.append(self._create_heading_block(line[4:], 3))
-                    elif line.startswith("## "):
-                        children_blocks.append(self._create_heading_block(line[3:], 2))
-                    elif line.startswith("# "):
-                        children_blocks.append(self._create_heading_block(line[2:], 1))
-                    else:
-                        # Split paragraph content into chunks of 2000 characters
-                        chunks = [line[i : i + 2000] for i in range(0, len(line), 2000)]
-                        for chunk in chunks:
-                            children_blocks.append(
-                                {
-                                    "object": "block",
-                                    "type": "paragraph",
-                                    "paragraph": {
-                                        "rich_text": [
-                                            {"type": "text", "text": {"content": chunk}}
-                                        ]
-                                    },
-                                }
-                            )
-
         properties = {
             "notes": {"title": [{"text": {"content": title}}]},
             "review level": {"select": {"name": "📖 reading"}},
@@ -199,47 +162,58 @@ class NotionClient:
         self, text: str, block_type: str = "paragraph", max_block_length: int = 2000
     ) -> list:
         blocks = []
-        current_block_content = []
+        current_block_paragraphs = []  # Store paragraphs for the current block
 
-        # Split text by newlines to respect original paragraph breaks
-        paragraphs = text.split("\\n")
+        # Split text by actual newlines
+        paragraphs = text.split("\n")
 
         for paragraph in paragraphs:
             if not paragraph.strip():
                 continue
 
-            # If adding this paragraph exceeds max_block_length, create a new block
+            # If a single paragraph is too long, split it into smaller chunks
+            if len(paragraph) > max_block_length:
+                # Flush any existing content before adding chunks of a very long paragraph
+                if current_block_paragraphs:
+                    blocks.append(
+                        self._create_block_with_rich_text(
+                            block_type, "\n".join(current_block_paragraphs)
+                        )
+                    )
+                    current_block_paragraphs = []
+
+                # Split the long paragraph into chunks and add them as individual blocks
+                for i in range(0, len(paragraph), max_block_length):
+                    chunk = paragraph[i : i + max_block_length]
+                    blocks.append(self._create_block_with_rich_text(block_type, chunk))
+                continue  # Move to the next paragraph
+
+            # Calculate the length if the current paragraph were added to the current block
+            # Account for the newline character that will be added if there are multiple paragraphs
+            potential_block_content = "\n".join(current_block_paragraphs + [paragraph])
+
+            # If adding this paragraph makes the current block too long,
+            # flush the current block and start a new one
             if (
-                sum(len(c) for c in current_block_content) + len(paragraph)
-                > max_block_length
-                and current_block_content
+                len(potential_block_content) > max_block_length
+                and current_block_paragraphs
             ):
                 blocks.append(
                     self._create_block_with_rich_text(
-                        block_type, "\\n".join(current_block_content)
+                        block_type, "\n".join(current_block_paragraphs)
                     )
                 )
-                current_block_content = []
+                current_block_paragraphs = [
+                    paragraph
+                ]  # Start new block with current paragraph
+            else:
+                current_block_paragraphs.append(paragraph)
 
-            current_block_content.append(paragraph)
-
-            # If current_block_content is long enough, or it's the last paragraph, create a block
-            if (
-                sum(len(c) for c in current_block_content) >= max_block_length
-                or paragraph == paragraphs[-1]
-            ):
-                blocks.append(
-                    self._create_block_with_rich_text(
-                        block_type, "\\n".join(current_block_content)
-                    )
-                )
-                current_block_content = []
-
-        # Add any remaining content
-        if current_block_content:
+        # Add any remaining content in current_block_paragraphs
+        if current_block_paragraphs:
             blocks.append(
                 self._create_block_with_rich_text(
-                    block_type, "\\n".join(current_block_content)
+                    block_type, "\n".join(current_block_paragraphs)
                 )
             )
 

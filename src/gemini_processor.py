@@ -27,16 +27,16 @@ class GeminiProcessor:
 
             parts = response_text.split("**")
             for i, part in enumerate(parts):
-                if "要点" in part:
+                if "Key Points" in part:
                     kp_content = parts[i + 1].strip()
                     key_points = [
                         item.strip().replace("* ", "")
                         for item in kp_content.split("\n")
                         if item.strip().startswith("*")
                     ]
-                elif "笔记" in part:
+                elif "Notes" in part:
                     notes = parts[i + 1].strip()
-                elif "摘要" in part:
+                elif "Summary" in part:
                     summary = parts[i + 1].strip()
 
             return {"key_points": key_points, "notes": notes, "summary": summary}
