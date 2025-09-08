@@ -1,7 +1,7 @@
 [project]
-name = "notion-bills-tracker"
+name = "personal_notion_reading_note"
 version = "0.1.0"
-description = "A tool to track personal bills and push to notion."
+description = "A tool to generate AI reading notes and push to notion."
 dependencies = [
     "google-generativeai",
     "requests",
