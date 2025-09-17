@@ -8,6 +8,8 @@ import yaml  # Import yaml
 from pypdf import PdfReader  # Import PdfReader
 import glob  # Import glob
 from pathlib import Path  # Import Path
+from pydantic import ValidationError
+from src.models import Config
 
 
 def main():
@@ -34,48 +36,42 @@ def main():
     # Load config.yaml
     try:
         with open("config.yaml", "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-        subject_id = config.get("subject_id")
-        assignment_id = config.get("assignments_id")
-        reading_template_id = config.get("reading_template_id")
+            config_data = yaml.safe_load(f)
+        config = Config(**config_data)
 
-        prompts_config = config.get("prompts", [])
-        active_prompt_name = config.get("active_prompt", "default_reading_prompt")
-
-        selected_prompt_content = next(
-            (p["content"] for p in prompts_config if p["name"] == active_prompt_name),
+        selected_prompt = next(
+            (p for p in config.prompts if p.name == config.active_prompt),
             None,
         )
 
-        if not selected_prompt_content:
+        if not selected_prompt:
             logger.error(
-                f"Active prompt '{active_prompt_name}' not found in config.yaml."
+                f"Active prompt '{config.active_prompt}' not found in config.yaml."
             )
             return
+        selected_prompt_content = selected_prompt.content
 
     except FileNotFoundError:
         logger.error(
-            "config.yaml not found. Please create it with subject_id and assignments_id."
+            "config.yaml not found. Please create it with the required fields."
         )
         return
-    except yaml.YAMLError as e:
-        logger.error(f"Error reading config.yaml: {e}")
+    except (yaml.YAMLError, ValidationError) as e:
+        logger.error(f"Error reading or validating config.yaml: {e}")
         return
 
-    gemini_processor = GeminiProcessor(
-        gemini_api_key, selected_prompt_content, log_level_str=log_level_str
-    )
+    gemini_processor = GeminiProcessor(gemini_api_key, log_level_str=log_level_str)
 
     notion_client = NotionClient(
         notion_api_key,
         notion_database_id,
-        reading_template_id=reading_template_id,
+        reading_template_id=config.reading_template_id,
         log_level_str=log_level_str,
     )
 
     # Process PDF files in the 'readings' directory
-    readings_dir = config.get("reading_folder")
-    pdf_files = glob.glob(os.path.join(readings_dir, "*.pdf"))
+    readings_dir = config.reading_folder
+    pdf_files = glob.glob(os.path.join(str(readings_dir), "*.pdf"))
 
     if not pdf_files:
         logger.info(f"No PDF files found in the '{readings_dir}' directory.")
@@ -96,11 +92,11 @@ def main():
 
             notion_client.create_reading_page(
                 title=title,
-                subject_id=subject_id,
-                assignment_id=assignment_id,
-                key_points=processed_content.get("key_points"),
-                notes=processed_content.get("notes"),
-                summary=processed_content.get("summary"),
+                subject_id=config.subject_id,
+                assignment_id=config.assignments_id,
+                key_points=processed_content.key_points,
+                notes=processed_content.notes,
+                summary=processed_content.summary,
             )
             logger.info(f"Created Notion page for {file_name}")
 
