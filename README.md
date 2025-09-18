@@ -68,9 +68,9 @@ The project uses a `.env` file for sensitive API keys and a `config.yaml` file f
     *   `model`: The specific Gemini AI model to use (e.g., `gemini/gemini-2.5-pro`).
     *   `subject_id`: The Notion relation ID for the 'subject' property in your database.
     *   `assignments_id`: The Notion relation ID for the 'assignments' property in your database.
-    *   `reading_template_id`: (Optional) The ID of a Notion template to use when creating new reading pages.
-    *   `prompts`: A list of prompt configurations for the Gemini AI. Each prompt has a `name` and `content`.
-    *   `active_prompt`: The name of the prompt to be used for processing documents. This should match one of the `name` values in the `prompts` list.
+    *   ~~`reading_template_id`: (Optional) The ID of a Notion template to use when creating new reading pages.~~
+    *   ~~`prompts`: A list of prompt configurations for the Gemini AI. Each prompt has a `name` and `content`.~~
+    *   ~~`active_prompt`: The name of the prompt to be used for processing documents. This should match one of the `name` values in the `prompts` list.~~
 
 ## Usage
 
