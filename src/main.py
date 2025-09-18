@@ -8,6 +8,7 @@ import yaml  # Import yaml
 from pypdf import PdfReader  # Import PdfReader
 import glob  # Import glob
 from pathlib import Path  # Import Path
+from dspy_modules import ReadingNotes
 
 
 def main():
@@ -39,19 +40,20 @@ def main():
         assignment_id = config.get("assignments_id")
         reading_template_id = config.get("reading_template_id")
 
-        prompts_config = config.get("prompts", [])
-        active_prompt_name = config.get("active_prompt", "default_reading_prompt")
+        # Prompts are no longer needed as dspy handles the prompting internally
+        # prompts_config = config.get("prompts", [])
+        # active_prompt_name = config.get("active_prompt", "default_reading_prompt")
 
-        selected_prompt_content = next(
-            (p["content"] for p in prompts_config if p["name"] == active_prompt_name),
-            None,
-        )
+        # selected_prompt_content = next(
+        #     (p["content"] for p in prompts_config if p["name"] == active_prompt_name),
+        #     None,
+        # )
 
-        if not selected_prompt_content:
-            logger.error(
-                f"Active prompt '{active_prompt_name}' not found in config.yaml."
-            )
-            return
+        # if not selected_prompt_content:
+        #     logger.error(
+        #         f"Active prompt '{active_prompt_name}' not found in config.yaml."
+        #     )
+        #     return
 
     except FileNotFoundError:
         logger.error(
@@ -62,9 +64,7 @@ def main():
         logger.error(f"Error reading config.yaml: {e}")
         return
 
-    gemini_processor = GeminiProcessor(
-        gemini_api_key, selected_prompt_content, log_level_str=log_level_str
-    )
+    gemini_processor = GeminiProcessor(gemini_api_key, log_level_str=log_level_str)
 
     notion_client = NotionClient(
         notion_api_key,
@@ -89,7 +89,9 @@ def main():
             for page in reader.pages:
                 pdf_content += page.extract_text()
 
-            processed_content = gemini_processor.process_document(pdf_content)
+            processed_content: ReadingNotes = gemini_processor.process_document(
+                pdf_content
+            )
 
             file_name = Path(pdf_file).stem
             title = f"Reading Summary: {file_name}"
@@ -98,9 +100,9 @@ def main():
                 title=title,
                 subject_id=subject_id,
                 assignment_id=assignment_id,
-                key_points=processed_content.get("key_points"),
-                notes=processed_content.get("notes"),
-                summary=processed_content.get("summary"),
+                key_points=processed_content.key_points,
+                notes=processed_content.notes,
+                summary=processed_content.summary,
             )
             logger.info(f"Created Notion page for {file_name}")
 

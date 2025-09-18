@@ -4,7 +4,9 @@ import os
 from datetime import datetime  # Import datetime
 from dotenv import load_dotenv
 from logger_utils import setup_logger
-from gemini_processor import GeminiProcessor
+
+# from gemini_processor import GeminiProcessor # No longer needed
+from dspy_modules import ReadingNotes  # Import ReadingNotes
 
 
 class NotionClient:
@@ -30,7 +32,7 @@ class NotionClient:
         title: str,
         subject_id: str,
         assignment_id: str,
-        key_points: list = None,
+        key_points: list[str] = None,  # Type hint for key_points
         notes: str = None,
         summary: str = None,
     ) -> dict:
@@ -244,8 +246,8 @@ if __name__ == "__main__":
         notion_database_id,
         log_level_str=log_level_str,
     )
-    gemini_processor = GeminiProcessor(
-        gemini_api_key, log_level_str=log_level_str
-    )  # Pass log level to GeminiProcessor as well
+    # gemini_processor = GeminiProcessor(
+    #     gemini_api_key, log_level_str=log_level_str
+    # )  # Pass log level to GeminiProcessor as well
 
     notion_client.logger.info("Logging reading summary...")

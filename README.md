@@ -5,7 +5,8 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 ## Features
 
 *   **PDF Content Extraction**: Extracts text from PDF files located in a specified directory.
-*   **AI-Powered Summarization**: Utilizes the Gemini AI model to generate key points, detailed notes, and a comprehensive summary of the extracted text.
+*   **AI-Powered Summarization (with DSPy)**: Leverages the [DSPy framework](https://dspy.ai/) to program and optimize prompts for the Gemini AI model, generating high-quality key points, detailed notes, and comprehensive summaries of the extracted text. DSPy enables the creation of modular AI systems and automatically optimizes prompts and weights for various NLP tasks, enhancing the reliability and accuracy of AI-driven content generation. This approach significantly improves the robustness and performance of the AI by systematically compiling and optimizing the prompt engineering process.
+*   **Data Validation with Pydantic**: Utilizes [Pydantic](https://docs.pydantic.dev/) for robust data validation and settings management. Pydantic ensures that all configuration and data models are type-safe and validated at runtime, reducing errors and improving the reliability of data processing throughout the application. This is crucial for maintaining data integrity when interacting with external APIs like Notion and Gemini.
 *   **Notion Integration**: Creates new pages in a specified Notion database with the processed reading notes, including structured content (key points as bulleted lists, summary and notes as paragraphs, and original content with proper headings).
 *   **Configurable**: Allows configuration of Notion database IDs and reading folder via a `config.yaml` file.
 *   **Logging**: Provides detailed logging for tracking the process and troubleshooting. Log files are generated in the `logging/app.log` file.
@@ -18,21 +19,31 @@ A Python tool designed to automate the process of summarizing PDF documents usin
     cd personal_notion_reading_note
     ```
 
-2.  **Install uv**:
+2.  **Install uv (if not already installed)**:
     If you don't have `uv` installed, you can install it using `pip`:
     ```bash
     pip install uv
     ```
 
-3.  **Install dependencies**:
+3.  **Create and activate a virtual environment**:
+    Using `uv`, create a virtual environment and activate it. This ensures all dependencies are isolated from your system's Python environment.
     ```bash
-    uv sync
+    uv venv
+    source .venv/bin/activate  # On macOS/Linux
+    .venv\Scripts\activate     # On Windows
     ```
-    This will install the dependencies listed in `pyproject.toml`.
+
+3.  **Install dependencies**:
+    With the virtual environment active, install the project dependencies listed in `pyproject.toml`.
+    ```bash
+    uv sync --active
+    ```
 
 ## Configuration
 
-1.  **Environment Variables**: Create a `.env` file in the root directory and add the following:
+The project uses a `.env` file for sensitive API keys and a `config.yaml` file for general settings. Pydantic is used to manage and validate these configurations, ensuring type safety and robust error handling.
+
+1.  **Environment Variables (`.env`)**: Create a `.env` file in the root directory and add the following:
     ```
     NOTION_API_KEY="your_notion_api_key"
     NOTION_DATABASE_ID="your_notion_database_id"
@@ -42,15 +53,19 @@ A Python tool designed to automate the process of summarizing PDF documents usin
     *   `NOTION_API_KEY`: Obtain this from your Notion integration settings.
     *   `NOTION_DATABASE_ID`: The ID of the Notion database where reading notes will be stored.
     *   `GEMINI_API_KEY`: Your API key for the Google Gemini AI model.
+    *   `LOG_LEVEL`: (Optional) Set the logging level. Default is `WARNING`.
 
-2.  **`config.yaml`**: Create a `config.yaml` file in the root directory with the following structure:
+2.  **Configuration File (`config.yaml`)**: Create a `config.yaml` file in the root directory with the following structure:
     ```yaml
     reading_folder: "readings"
+    max_tokens: 8000
+    model: "gemini/gemini-2.5-pro"
     subject_id: "your_notion_subject_relation_id"
     assignments_id: "your_notion_assignments_relation_id"
-    # reading_template_id: "your_notion_reading_template_id" # Optional
     ```
     *   `reading_folder`: The directory where your PDF files are located (e.g., `readings/`).
+    *   `max_tokens`: Maximum number of tokens for the AI model's response.
+    *   `model`: The specific Gemini AI model to use (e.g., `gemini/gemini-2.5-pro`).
     *   `subject_id`: The Notion relation ID for the 'subject' property in your database.
     *   `assignments_id`: The Notion relation ID for the 'assignments' property in your database.
     *   `reading_template_id`: (Optional) The ID of a Notion template to use when creating new reading pages.
@@ -61,12 +76,13 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 
 1.  Place your PDF documents in the directory specified by `reading_folder` in `config.yaml` (e.g., `./readings/`). For demonstration purposes, `readings/AI_ch1-1.pdf` will be used as an example.
 2.  Run the main script:
+    Ensure your virtual environment is activated (as per installation step 2). Then, run the main script:
     ```bash
-    uv run src/main.py
+    python src/main.py
     ```
     The script will:
     *   Read all PDF files from the `reading_folder`.
-    *   Process each PDF using the Gemini AI to extract key points, notes, and a summary.
+    *   Process each PDF using the configured Gemini AI model and the active DSPy prompt to extract key points, notes, and a summary.
     *   Create a new page in your specified Notion database for each PDF, populating it with the extracted information and the original content.
 
 ## Output example (Notion)
@@ -75,13 +91,30 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 
 ## Project Structure
 
+```
+.
+├── .env                  # Environment variables (API keys)
+├── .gitignore            # Git ignore file
+├── config.yaml           # Configuration for reading folder and Notion IDs
+├── pyproject.toml        # Project metadata and dependencies
+├── README.md             # This README file
+├── uv.lock               # Dependency lock file
+└── src/
+    ├── __init__.py
+    ├── dspy_modules.py   # DSPy modules for prompt programming and AI model optimization
+    ├── gemini_processor.py   # Handles interaction with Gemini AI for summarization
+    ├── logger_utils.py       # Utility for logging
+    ├── main.py               # Main script to orchestrate PDF processing and Notion integration
+    └── notion_client.py      # Handles interaction with Notion API for page creation
+```
+
 ## Usage of MCPs (Model Context Protocol) during Development
 
 This project leverages the Model Context Protocol (MCP) for enhanced development and interaction with external services. Specifically, it integrates with:
 
 *   **Notion MCP**: Used for direct interaction with the Notion API, allowing for programmatic creation and management of Notion pages and databases. This is crucial for the core functionality of pushing reading notes to Notion.
 *   **Context7**: Utilized for retrieving up-to-date documentation and code examples for various libraries. This aids in understanding and implementing features by providing relevant context during development.
-*   **Gemini-2.5-Pro**: The Gemini AI model is used for summarizing PDF content, extracting key points, and generating detailed notes. During development, the Gemini-2.5-Pro model can be used for more advanced summarization and content generation tasks.
+*   **Gemini AI Model**: The Gemini AI model is used for summarizing PDF content, extracting key points, and generating detailed notes. The specific model (e.g., `gemini/gemini-2.5-pro`) is configurable via `config.yaml`. During development, different Gemini models can be used for more advanced summarization and content generation tasks.
 
 ## Notion API Usage in `src/notion_client.py`
 
