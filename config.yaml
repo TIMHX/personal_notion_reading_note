@@ -1,47 +1,50 @@
 reading_folder: "readings"
 
+max_tokens: 8000
+model: "gemini/gemini-2.5-pro"
+
 subject_id: "24f55a34-9949-8006-8dec-fac03212190b"
 assignments_id: "24f55a34-9949-8045-b62d-df9d8cc37311"
 # reading_template_id: "17255a349949814a8d35d76a8ac0fc93"
 
-active_prompt: "secondary_reading_prompt"
-prompts:
-  - name: "default_reading_prompt"
-    content: |
-      Please process the following document and provide the following:
-        1. Key Points: The main ideas or important information of the document, presented as a bulleted list no sub bullet.
-        2. Notes: Personal understanding, thoughts, or additional explanations of the document's content, presented in paragraph form.
-        3. Summary: a detailed summary of the document, presented in paragraph form.
+# active_prompt: "secondary_reading_prompt"
+# prompts:
+#   - name: "default_reading_prompt"
+#     content: |
+#       Please process the following document and provide the following:
+#         1. Key Points: The main ideas or important information of the document, presented as a bulleted list no sub bullet.
+#         2. Notes: Personal understanding, thoughts, or additional explanations of the document's content, presented in paragraph form.
+#         3. Summary: a detailed summary of the document, presented in paragraph form.
 
-      Please ensure the output format is as follows, with clear headings separating each section:
+#       Please ensure the output format is as follows, with clear headings separating each section:
 
-      ### @Key Points
-        - [Key Point 1]
-        - [Key Point 2]
-        - [Key Point 3]
+#       ### @Key Points
+#         - [Key Point 1]
+#         - [Key Point 2]
+#         - [Key Point 3]
 
-      ### @Notes
-      [Your notes here]
+#       ### @Notes
+#       [Your notes here]
 
-      ### @Summary
-      [Your summary here]
+#       ### @Summary
+#       [Your summary here]
 
-  - name: "secondary_reading_prompt"
-    content: |
-      Please perform an in-depth analysis of the following textbook document and provide the following content. Ensure that each section is detailed, clear, and includes as much key information and detail as possible.
-        1. Key Points: Directly and comprehensively list all core information from the document. Please focus on extracting and explaining key concepts, important definitions, core principles, and key terminology, especially content that is highlighted in the original text (e.g., in bold). Each point should be independent, clear, and contain sufficient context or explanation, rather than being a mere list of single words, presented as a bulleted list with no sub bullet
-        2. Notes: Provide a detailed elaboration and supplement to the key information. In this section, please explain the logical relationships, hierarchical structure, and interconnections among the various key points. Provide a more in-depth explanation of important theories or models, and describe their practical applications or significance. This section should serve as a deeper dive and extension of the "Key Points," not as personal reflection, presented in paragraph form.
-        3. Summary: Provide a comprehensive and detailed summary of the document's content. This summary must cover all the information listed in the "Key Points" and be organized according to the logical sequence of the original text. Please ensure the summary is of sufficient length to completely reproduce the core content of the document, including major theories, the evidence or examples that support them, and the final conclusions drawn. The summary should strive for completeness of content and accuracy of information, avoiding the omission of any critical details, presented in paragraph form.
+#   - name: "secondary_reading_prompt"
+#     content: |
+#       Please perform an in-depth analysis of the following textbook document and provide the following content. Ensure that each section is detailed, clear, and includes as much key information and detail as possible.
+#         1. Key Points: Directly and comprehensively list all core information from the document. Please focus on extracting and explaining key concepts, important definitions, core principles, and key terminology, especially content that is highlighted in the original text (e.g., in bold). Each point should be independent, clear, and contain sufficient context or explanation, rather than being a mere list of single words, presented as a bulleted list with no sub bullet
+#         2. Notes: Provide a detailed elaboration and supplement to the key information. In this section, please explain the logical relationships, hierarchical structure, and interconnections among the various key points. Provide a more in-depth explanation of important theories or models, and describe their practical applications or significance. This section should serve as a deeper dive and extension of the "Key Points," not as personal reflection, presented in paragraph form.
+#         3. Summary: Provide a comprehensive and detailed summary of the document's content. This summary must cover all the information listed in the "Key Points" and be organized according to the logical sequence of the original text. Please ensure the summary is of sufficient length to completely reproduce the core content of the document, including major theories, the evidence or examples that support them, and the final conclusions drawn. The summary should strive for completeness of content and accuracy of information, avoiding the omission of any critical details, presented in paragraph form.
 
-      Please ensure the output is formatted as follows, using clear headings to separate each section:
+#       Please ensure the output is formatted as follows, using clear headings to separate each section:
 
-      ### @Key Points
-        - [Key Point 1]
-        - [Key Point 2]
-        - [Key Point 3]
+#       ### @Key Points
+#         - [Key Point 1]
+#         - [Key Point 2]
+#         - [Key Point 3]
 
-      ### @Notes
-      [Provide a detailed elaboration here on the logical relationships, hierarchical structure, and interconnections between the key points, as well as a deeper explanation of key theories.]
+#       ### @Notes
+#       [Provide a detailed elaboration here on the logical relationships, hierarchical structure, and interconnections between the key points, as well as a deeper explanation of key theories.]
 
-      ### @Summary
-      [Provide a detailed, comprehensive, and well-structured paragraph-style summary here, ensuring all key information is covered with completeness and accuracy.]
+#       ### @Summary
+#       [Provide a detailed, comprehensive, and well-structured paragraph-style summary here, ensuring all key information is covered with completeness and accuracy.]
