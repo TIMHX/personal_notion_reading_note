@@ -4,6 +4,7 @@ A Python tool designed to automate the process of summarizing PDF documents usin
 
 ## Public notion demo
 [Class notes](https://www.notion.so/Public-class-notes-27855a34994980b9866dee8f5eb51ee5?source=copy_link)
+The notion page for personal course schedule, notes, reading material, etc.
 
 ## Features
 
