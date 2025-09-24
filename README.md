@@ -2,6 +2,9 @@
 
 A Python tool designed to automate the process of summarizing PDF documents using the Gemini AI model and pushing the processed content, including key points, notes, summary, and the original content, to Notion. This helps in organizing and tracking personal reading notes efficiently. Allow bulk process for multiple pdf, prefer to chunk down large pdf into chapters for better AI summary accuracy.
 
+## Public notion demo
+![Class notes](https://www.notion.so/Public-class-notes-27855a34994980b9866dee8f5eb51ee5?source=copy_link)
+
 ## Features
 
 *   **PDF Content Extraction**: Extracts text from PDF files located in a specified directory.
